@@ -59,8 +59,12 @@
               <option value="date_desc">Date (newest first)</option>
             </select>
           </label>
+          <div id="pagination" class="muted" style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <button id="prev-page" class="btn btn-muted">Prev</button>
+            <span id="page-info">Page 1</span>
+            <button id="next-page" class="btn btn-muted">Next</button>
+          </div>
         </div>
-
         <table id="expenses-table">
           <thead>
             <tr>
@@ -68,6 +72,7 @@
               <th>Category</th>
               <th>Description</th>
               <th class="right">Amount (₹)</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody></tbody>
