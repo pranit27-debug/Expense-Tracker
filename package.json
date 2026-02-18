@@ -1,0 +1,17 @@
+{
+  "name": "expense-tracker",
+  "version": "0.1.0",
+  "description": "Minimal full-stack expense tracker (Express + SQLite + static frontend)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^8.0.1",
+    "express": "^4.18.2",
+    "uuid": "^9.0.0"
+  }
+}
