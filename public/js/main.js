@@ -20,8 +20,9 @@ const sortSelect = ui.q('#sort');
 const totalEl = ui.q('#total');
 const summaryEl = ui.q('#summary');
 
-const list = initList();
-const formComp = initForm({ onSaved: () => list.refresh() });
+let formComp;
+const list = initList({ onEdit: (item) => { console.debug('onEdit received', item); if (formComp && typeof formComp.setEdit === 'function') formComp.setEdit(item); } });
+formComp = initForm({ onSaved: () => { console.debug('onSaved callback - refreshing list'); list && list.refresh(); } });
 
 async function flushPendingAndRefresh() {
   const pending = api.loadPending();
