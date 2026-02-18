@@ -14,24 +14,42 @@ export function initList({ onEdit } = {}) {
     ui.setLoading(loadingEl, true);
     ui.showError(errorEl, '');
     try {
-      const resp = await api.fetchExpenses({ category: filterCategory.value, sort: sortSelect.value, page: page, per_page: perPage });
-      const items = resp.items || [];
-      const total = resp.total || (Array.isArray(items) ? items.length : 0);
-      ui.renderTable(tableBody, items);
-      ui.populateFilterOptions(filterCategory, items);
-      ui.renderTotal(totalEl, items);
-      // fetch full set (no paging) to build a complete category summary
-      try {
-        const fullResp = await api.fetchExpenses({ category: filterCategory.value, sort: sortSelect.value });
-        const allItems = Array.isArray(fullResp) ? fullResp : (fullResp.items || []);
-        ui.renderSummary(summaryEl, allItems);
-      } catch (e) {
-        // fallback to page items
-        ui.renderSummary(summaryEl, items);
+      // Fetch full payload (no pagination) then apply sort locally and paginate
+      console.log('Fetching full expense payload for global sort', { sort: sortSelect.value, category: filterCategory.value });
+      const fullResp = await api.fetchExpenses({ category: filterCategory.value });
+      const allItems = Array.isArray(fullResp) ? fullResp : (fullResp.items || []);
+      console.log('Full payload size', allItems.length);
+
+      // Apply client-side sorting across the full payload
+      const sortMode = sortSelect.value;
+      function sortItems(arr, mode) {
+        const copy = Array.from(arr);
+        switch (mode) {
+          case 'date_asc': return copy.sort((a,b)=> new Date(a.date) - new Date(b.date));
+          case 'date_desc': return copy.sort((a,b)=> new Date(b.date) - new Date(a.date));
+          case 'amount_asc': return copy.sort((a,b)=> Number(a.amount) - Number(b.amount));
+          case 'amount_desc': return copy.sort((a,b)=> Number(b.amount) - Number(a.amount));
+          case 'category_asc': return copy.sort((a,b)=> String(a.category||'').localeCompare(String(b.category||''), undefined, {sensitivity:'base'}));
+          case 'category_desc': return copy.sort((a,b)=> String(b.category||'').localeCompare(String(a.category||''), undefined, {sensitivity:'base'}));
+          default: return copy;
+        }
       }
+
+      const sorted = sortItems(allItems, sortMode);
+
+      // Paginate locally
+      const total = sorted.length;
+      const totalPages = Math.max(1, Math.ceil(total / perPage));
+      const start = (page - 1) * perPage;
+      const pageItems = sorted.slice(start, start + perPage);
+
+      ui.renderTable(tableBody, pageItems);
+      ui.populateFilterOptions(filterCategory, sorted);
+      ui.renderTotal(totalEl, pageItems);
+      ui.renderSummary(summaryEl, sorted);
+
       // update pagination UI
       const pageInfo = ui.q('#page-info');
-      const totalPages = Math.max(1, Math.ceil((resp.total || total) / perPage));
       if (pageInfo) pageInfo.textContent = `Page ${page} of ${totalPages}`;
       // enable/disable nav
       if (prevBtn) prevBtn.disabled = page <= 1;
@@ -59,7 +77,7 @@ export function initList({ onEdit } = {}) {
     const btn = el && typeof el.closest === 'function' ? el.closest('button[data-id]') : null;
     if (!btn) return;
     const id = btn.getAttribute('data-id') || (btn.closest('tr') && btn.closest('tr').dataset.id);
-    console.debug('Clicked button', btn.className, 'id=', id);
+    console.log('Clicked button', btn.className, 'id=', id);
     if (!id) return;
     if (btn.classList.contains('btn-delete')) {
       if (!confirm('Delete this expense?')) return;
@@ -86,7 +104,7 @@ export function initList({ onEdit } = {}) {
   });
 
   filterCategory.addEventListener('change', loadAndRender);
-  sortSelect.addEventListener('change', () => { page = 1; loadAndRender(); });
+  sortSelect.addEventListener('change', () => { console.log('Sort changed:', sortSelect.value); page = 1; loadAndRender(); });
   filterCategory.addEventListener('change', () => { page = 1; loadAndRender(); });
 
   return {

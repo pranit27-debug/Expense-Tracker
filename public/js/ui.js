@@ -103,7 +103,7 @@ export function showCategoryModal(entries) {
   box.appendChild(footer);
 
   let page = 1;
-  const perPage = 10;
+  const perPage = 5;
   const total = entries.length;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
 

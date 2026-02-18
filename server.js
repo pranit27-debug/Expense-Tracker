@@ -65,21 +65,61 @@ app.post('/expenses', (req, res) => {
 
 // GET /expenses?category=food&sort=date_desc=1
 app.get('/expenses', (req, res) => {
-  const { category, sort } = req.query;
-  let sql = 'SELECT * FROM expenses';
-  const params = [];
-  if (category) {
-    sql += ' WHERE category = ?';
-    params.push(category);
-  }
-  if (sort === 'date_desc') {
-    sql += (category ? ' ' : ' ') + 'ORDER BY date DESC, created_at DESC';
-  } else {
-    sql += (category ? ' ' : ' ') + 'ORDER BY date DESC, created_at DESC';
-  }
+  try {
+    const { category, sort, page, per_page } = req.query;
+    const params = [];
+    let where = '';
+    if (category) {
+      where = 'WHERE category = ?';
+      params.push(category);
+    }
 
-  const rows = db.prepare(sql).all(...params);
-  res.json(rows.map(mapRow));
+    // Determine ORDER BY clause
+    let orderBy = 'ORDER BY date DESC, created_at DESC';
+    switch (sort) {
+      case 'date_asc': orderBy = 'ORDER BY date ASC, created_at ASC'; break;
+      case 'date_desc': orderBy = 'ORDER BY date DESC, created_at DESC'; break;
+      case 'amount_asc': orderBy = 'ORDER BY CAST(amount AS INTEGER) ASC, date DESC'; break;
+      case 'amount_desc': orderBy = 'ORDER BY CAST(amount AS INTEGER) DESC, date DESC'; break;
+      case 'category_asc': orderBy = "ORDER BY category COLLATE NOCASE ASC, date DESC"; break;
+      case 'category_desc': orderBy = "ORDER BY category COLLATE NOCASE DESC, date DESC"; break;
+      default: orderBy = 'ORDER BY date DESC, created_at DESC';
+    }
+
+    // Pagination (server-side)
+    const pageNum = Math.max(1, parseInt(page || '1', 10));
+    // If per_page is not provided, default to 0 (no pagination)
+    const perPage = typeof per_page !== 'undefined' && per_page !== ''
+      ? Math.max(1, Math.min(100, parseInt(per_page, 10) || 1))
+      : 0;
+
+    // Count total matching rows
+    const countSql = `SELECT COUNT(*) as cnt FROM expenses ${where}`;
+    const countRow = db.prepare(countSql).get(...params);
+    const total = countRow ? countRow.cnt : 0;
+
+    let sql = `SELECT * FROM expenses ${where} ${orderBy}`;
+    console.log('GET /expenses', { sort, page: pageNum, per_page: perPage, sql });
+    if (perPage > 0) {
+      const offset = (pageNum - 1) * perPage;
+      sql += ' LIMIT ' + perPage + ' OFFSET ' + offset;
+    }
+
+    const rows = db.prepare(sql).all(...params);
+    // log the first few raw amounts to help debug ordering
+    try { console.log('GET /expenses -> raw amounts (first rows):', rows.slice(0,10).map(r=>r.amount)); } catch(e){/*ignore*/}
+    const items = rows.map(mapRow);
+    if (perPage > 0) {
+      const totalPages = Math.max(1, Math.ceil(total / perPage));
+      return res.json({ items, total, page: pageNum, per_page: perPage, total_pages: totalPages });
+    }
+
+    // No pagination requested: return full sorted items
+    return res.json(items);
+  } catch (err) {
+    console.error('GET /expenses error', err);
+    res.status(500).json({ error: 'Internal error' });
+  }
 });
 
 // PUT /expenses/:id  -- update an expense
