@@ -25,19 +25,20 @@ const formComp = initForm({ onSaved: () => list.refresh() });
 
 async function flushPendingAndRefresh() {
   const pending = api.loadPending();
-  if (!pending.length) return;
-  const formStatus = ui.q('#form-status');
-  if (formStatus) formStatus.textContent = `Resending ${pending.length} pending...`;
-  for (const p of pending.slice()) {
-    try {
-      await api.postExpense(p.body);
-      const cur = api.loadPending().filter(x => x.client_id !== p.client_id);
-      api.savePending(cur);
-    } catch (err) {
-      console.warn('Pending send failed', err);
+  if (pending.length) {
+    const formStatus = ui.q('#form-status');
+    if (formStatus) formStatus.textContent = `Resending ${pending.length} pending...`;
+    for (const p of pending.slice()) {
+      try {
+        await api.postExpense(p.body);
+        const cur = api.loadPending().filter(x => x.client_id !== p.client_id);
+        api.savePending(cur);
+      } catch (err) {
+        console.warn('Pending send failed', err);
+      }
     }
+    if (formStatus) formStatus.textContent = '';
   }
-  if (formStatus) formStatus.textContent = '';
   await list.refresh();
 }
 
