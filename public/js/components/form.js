@@ -10,6 +10,7 @@ export function initForm({ onSaved } = {}) {
   const submitBtn = ui.q('#submit');
   const formStatus = ui.q('#form-status');
   const errorEl = ui.q('#error');
+  let currentEditId = null;
 
   async function handleSubmit(ev) {
     ev.preventDefault();
@@ -23,26 +24,31 @@ export function initForm({ onSaved } = {}) {
     if (!amount || amount <= 0) { ui.showError(errorEl, 'Amount must be greater than 0'); return; }
 
     submitBtn.disabled = true;
-    formStatus.textContent = 'Submitting...';
-
-    const client_id = ui.uuidv4();
-    const body = { amount, category, description, date, client_id };
-
-    const pending = api.loadPending();
-    pending.push({ client_id, body });
-    api.savePending(pending);
+    formStatus.textContent = currentEditId ? 'Saving...' : 'Submitting...';
 
     try {
-      await api.postExpense(body);
-      const cur = api.loadPending().filter(x => x.client_id !== client_id);
-      api.savePending(cur);
-      formStatus.textContent = 'Saved.';
-      // Use explicit clearing instead of form.reset() to avoid collisions
+      if (currentEditId) {
+        // Update existing
+        const body = { amount, category, description, date };
+        await api.putExpense(currentEditId, body);
+        formStatus.textContent = 'Updated.';
+      } else {
+        const client_id = ui.uuidv4();
+        const body = { amount, category, description, date, client_id };
+        const pending = api.loadPending();
+        pending.push({ client_id, body });
+        api.savePending(pending);
+        await api.postExpense(body);
+        const cur = api.loadPending().filter(x => x.client_id !== client_id);
+        api.savePending(cur);
+        formStatus.textContent = 'Saved.';
+      }
       clearForm();
+      clearEdit();
       if (typeof onSaved === 'function') onSaved();
     } catch (err) {
       console.error(err);
-      ui.showError(errorEl, 'Failed to save — will retry automatically. ' + (err.message || ''));
+      ui.showError(errorEl, (currentEditId ? 'Failed to update: ' : 'Failed to save — will retry automatically. ') + (err.message || ''));
     } finally {
       submitBtn.disabled = false;
       setTimeout(()=>{ formStatus.textContent = ''; }, 2500);
@@ -60,12 +66,34 @@ export function initForm({ onSaved } = {}) {
     } catch (e) { /* ignore */ }
   }
 
+  function setEdit(expense) {
+    if (!expense) return;
+    currentEditId = expense.id;
+    amountInput.value = expense.amount;
+    categoryInput.value = expense.category;
+    descriptionInput.value = expense.description || '';
+    dateInput.value = expense.date;
+    submitBtn.textContent = 'Save';
+    formStatus.textContent = 'Editing...';
+    try {
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      amountInput.focus();
+    } catch (e) { /* ignore */ }
+    console.debug('Form setEdit:', expense.id);
+  }
+
+  function clearEdit() {
+    currentEditId = null;
+    submitBtn.textContent = 'Add expense';
+    formStatus.textContent = '';
+  }
+
   const resetBtn = ui.q('#reset');
   if (resetBtn) resetBtn.addEventListener('click', () => { clearForm(); ui.showError(errorEl, ''); formStatus.textContent = ''; });
 
   return {
-    destroy() {
-      form.removeEventListener('submit', handleSubmit);
-    }
+    destroy() { form.removeEventListener('submit', handleSubmit); },
+    setEdit,
+    clearEdit
   };
 }

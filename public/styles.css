@@ -34,11 +34,13 @@ input[type=date]{padding:8px}
 
 .controls{display:flex;gap:12px;align-items:center;margin-bottom:14px}
 
-table{width:100%;border-collapse:collapse;background:transparent}
-th,td{padding:12px;border-bottom:1px solid #f1f5f9;text-align:left}
+.table-wrapper{width:100%}
+table{width:100%;border-collapse:separate;border-spacing:0 12px;background:transparent}
+th,td{padding:12px;text-align:left}
 thead th{font-size:13px;color:#334155;font-weight:600;text-transform:uppercase;letter-spacing:0.02em}
-tbody tr:hover{background:linear-gradient(90deg, rgba(37,99,235,0.03), transparent)}
-tbody td{font-size:14px;color:#0b1220}
+tbody tr{background:var(--card);border:1px solid rgba(15,23,42,0.03);border-radius:10px;box-shadow:0 6px 12px rgba(12,18,38,0.04);display:table-row}
+tbody tr:hover{transform:translateY(-2px);transition:transform .12s ease}
+tbody td{font-size:14px;color:#0b1220;border:none}
 .right{text-align:right}
 
 .total{margin-top:14px;font-weight:700;font-size:15px;color:#0b1220}
@@ -61,3 +63,25 @@ tbody td{font-size:14px;color:#0b1220}
 
 /* Ensure hidden attribute hides elements reliably */
 [hidden]{display:none !important}
+
+/* Expenses grid/cards */
+.expenses-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:8px}
+.btn-link{background:none;border:none;color:var(--primary);cursor:pointer;padding:6px;border-radius:6px}
+.btn-link:hover{text-decoration:underline}
+.col-desc{max-width:44ch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.col-category{font-weight:600}
+.col-date{color:var(--muted);font-size:13px}
+.col-amount{font-weight:700}
+.col-actions{width:140px;text-align:right}
+
+/* Modal for category summary */
+.modal-overlay{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:flex;align-items:center;justify-content:center;z-index:9999}
+.modal-box{background:var(--card);padding:18px;border-radius:12px;max-width:560px;width:90%;box-shadow:0 18px 40px rgba(2,6,23,0.3)}
+.modal-box h3{margin:0 0 10px}
+.modal-list{display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow:auto;padding-right:4px}
+.modal-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:#fbfdff;border:1px solid rgba(14,165,233,0.04)}
+.modal-item-key{font-weight:600}
+.modal-item-val{font-weight:700}
+
+.modal-footer{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:12px}
+.modal-footer .btn{padding:8px 10px}

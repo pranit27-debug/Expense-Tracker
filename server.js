@@ -6,9 +6,6 @@ const db = require('./db');
 const app = express();
 app.use(express.json());
 
-// Serve static frontend
-app.use(express.static(path.join(__dirname, 'public')));
-
 // Helpers
 function toISO(d) {
   return new Date(d).toISOString();
@@ -84,6 +81,49 @@ app.get('/expenses', (req, res) => {
   const rows = db.prepare(sql).all(...params);
   res.json(rows.map(mapRow));
 });
+
+// PUT /expenses/:id  -- update an expense
+app.put('/expenses/:id', (req, res) => {
+  console.log('PUT /expenses/' + req.params.id);
+  try {
+    const id = req.params.id;
+    const { amount, category, description = '', date } = req.body;
+    if (amount == null || isNaN(Number(amount))) return res.status(400).json({ error: 'Invalid amount' });
+    if (Number(amount) <= 0) return res.status(400).json({ error: 'Amount must be greater than 0' });
+    if (!category) return res.status(400).json({ error: 'Missing category' });
+    if (!date) return res.status(400).json({ error: 'Missing date' });
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return res.status(400).json({ error: 'Invalid date' });
+
+    const paise = Math.round(Number(amount) * 100);
+    const stmt = db.prepare('UPDATE expenses SET amount = ?, category = ?, description = ?, date = ? WHERE id = ?');
+    const info = stmt.run(paise, category, description, date, id);
+    if (info.changes === 0) return res.status(404).json({ error: 'Not found' });
+    const row = db.prepare('SELECT * FROM expenses WHERE id = ?').get(id);
+    res.json(mapRow(row));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// DELETE /expenses/:id
+app.delete('/expenses/:id', (req, res) => {
+  try {
+    const id = req.params.id;
+    console.log('DELETE request for id', id);
+    const stmt = db.prepare('DELETE FROM expenses WHERE id = ?');
+    const info = stmt.run(id);
+    if (info.changes === 0) return res.status(404).json({ error: 'Not found' });
+    return res.status(204).send();
+  } catch (err) {
+    console.error('DELETE error', err);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// Serve static frontend (place after API routes to avoid accidental routing interference)
+app.use(express.static(path.join(__dirname, 'public')));
 
 function mapRow(r) {
   return {
