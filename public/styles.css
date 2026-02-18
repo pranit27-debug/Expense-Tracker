@@ -1,19 +1,63 @@
-:root{--max-width:780px;--muted:#666}
-body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.4;padding:24px;background:#f5f7fb;color:#111}
+:root{
+	--max-width:980px;
+	--muted:#6b7280;
+	--bg:#f4f6fb;
+	--card:#ffffff;
+	--primary:#2563eb;
+	--primary-600:#1e40af;
+	--accent:#06b6d4;
+	--danger:#ef4444;
+}
+
+*{box-sizing:border-box}
+body{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;line-height:1.4;padding:28px;background:var(--bg);color:#0f172a}
 .container{max-width:var(--max-width);margin:0 auto}
-.card{background:#fff;padding:16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:16px}
-label{display:block;margin-bottom:8px}
-input,select,button{font-size:14px;padding:8px;border:1px solid #ddd;border-radius:4px}
-input[type=date]{padding:6px}
-.form-actions{display:flex;gap:12px;align-items:center}
-.controls{display:flex;gap:12px;align-items:center;margin-bottom:12px}
-table{width:100%;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+.site-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:18px}
+.site-header h1{margin:0;font-weight:700;font-size:20px;color:#0b1220}
+.tagline{margin:4px 0 0;color:var(--muted);font-size:13px}
+
+.card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(12,18,38,0.06);margin-bottom:18px;border:1px solid rgba(15,23,42,0.03)}
+
+label{display:block;margin-bottom:6px;font-size:13px;color:#0b1220}
+input,select,button{font-size:14px;padding:10px;border:1px solid #e6e9ef;border-radius:8px}
+input:focus,select:focus{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,0.08);border-color:var(--primary-600)}
+input[type=date]{padding:8px}
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px}
+.field{display:flex;flex-direction:column}
+.form-actions{display:flex;gap:12px;align-items:center;margin-top:6px}
+
+.btn{border:none;cursor:pointer;border-radius:10px;padding:10px 14px;font-weight:600}
+.btn-primary{background:linear-gradient(180deg,var(--primary),var(--primary-600));color:#fff}
+.btn-primary:active{transform:translateY(1px)}
+.btn-muted{background:#f3f4f6;color:#111;border:1px solid #e6e9ef}
+
+.controls{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+
+table{width:100%;border-collapse:collapse;background:transparent}
+th,td{padding:12px;border-bottom:1px solid #f1f5f9;text-align:left}
+thead th{font-size:13px;color:#334155;font-weight:600;text-transform:uppercase;letter-spacing:0.02em}
+tbody tr:hover{background:linear-gradient(90deg, rgba(37,99,235,0.03), transparent)}
+tbody td{font-size:14px;color:#0b1220}
 .right{text-align:right}
-.total{margin-top:12px;font-weight:600}
+
+.total{margin-top:14px;font-weight:700;font-size:15px;color:#0b1220}
 .muted{color:var(--muted)}
 .hidden{display:none}
-.error{background:#fff3f3;border:1px solid #f5c2c2;padding:8px;border-radius:6px;color:#900;margin-bottom:8px}
-.summary-card{margin-top:12px;padding:8px;background:#fbfbff;border:1px solid #eef; border-radius:6px}
-.summary-card ul{margin:0;padding:0;list-style:none;display:flex;gap:12px;flex-wrap:wrap}
-.summary-card li{background:#fff;padding:6px 8px;border-radius:6px;border:1px solid #eee}
+.error{background:#fff7f7;border:1px solid rgba(239,68,68,0.12);padding:10px;border-radius:8px;color:var(--danger);margin-bottom:12px}
+.summary-card{margin-top:12px;padding:12px;background:linear-gradient(180deg,#fbfdff,#f8fbff);border:1px solid rgba(14,165,233,0.06); border-radius:10px}
+.summary-card ul{margin:0;padding:0;list-style:none;display:flex;gap:10px;flex-wrap:wrap}
+.summary-card li{background:#fff;padding:8px 10px;border-radius:8px;border:1px solid #eef2ff;font-weight:600}
+
+/* loading spinner */
+#loading{display:inline-flex;align-items:center;gap:8px}
+#loading::before{content:"";width:16px;height:16px;border-radius:50%;border:2px solid rgba(37,99,235,0.2);border-top-color:var(--primary);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media (max-width:640px){
+	.site-header{flex-direction:column;align-items:flex-start}
+	.form-actions{flex-direction:column;align-items:stretch}
+}
+
+/* Ensure hidden attribute hides elements reliably */
+[hidden]{display:none !important}
